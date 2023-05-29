@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 var (
+	tiles       map[XY]bool
 	players     []playerData
 	gameTick    uint64
 	gameLock    sync.Mutex
@@ -23,6 +25,7 @@ type XY struct {
 }
 
 const (
+	hudSize          = 128
 	startGameDelayMS = 1000
 	gridSize         = 16
 	border           = 1
@@ -65,13 +68,18 @@ func main() {
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
 	ebiten.SetScreenClearedEveryFrame(true)
-	ebiten.SetWindowSize(int(boardSize*gridSize), int(boardSize*gridSize))
+	ebiten.SetWindowSize(int(boardSize*gridSize), int(boardSize*gridSize)+hudSize)
 
 	go GameUpdate()
 
 	if err := ebiten.RunGameWithOptions(newGame(), nil); err != nil {
 		return
 	}
+}
+
+func checkDir(dir uint8) bool {
+
+	return false
 }
 
 func goDir(dir uint8, pos XY) XY {
@@ -168,7 +176,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
-
+	buf := fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS())
+	ebitenutil.DebugPrintAt(screen, buf, 0, screen.Bounds().Dy()-20)
 	gameLock.Unlock()
 }
 
