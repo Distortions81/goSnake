@@ -140,6 +140,19 @@ func GameUpdate() {
 }
 
 func (g *Game) Update() error {
+	gameLock.Lock()
+
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		players[0].Direction = DIR_NORTH
+	} else if ebiten.IsKeyPressed(ebiten.KeyA) {
+		players[0].Direction = DIR_WEST
+	} else if ebiten.IsKeyPressed(ebiten.KeyS) {
+		players[0].Direction = DIR_SOUTH
+	} else if ebiten.IsKeyPressed(ebiten.KeyD) {
+		players[0].Direction = DIR_EAST
+	}
+
+	gameLock.Unlock()
 	return nil
 }
 
