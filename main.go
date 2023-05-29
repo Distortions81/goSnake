@@ -29,6 +29,7 @@ const (
 	tileSize         = gridSize - border
 	boardSize        = 50
 	gameSpeed        = 4
+	deathTicks       = gameSpeed * 2
 
 	DIR_NONE  = 0
 	DIR_NORTH = 1
@@ -128,7 +129,7 @@ func GameUpdate() {
 			players = append(players[:deletePlayer], players[deletePlayer+1:]...)
 		}
 
-		fmt.Printf("tick %v\n", gameTick)
+		//fmt.Printf("tick %v\n", gameTick)
 
 		gameLock.Unlock()
 		sleepFor := sleepTime - int(time.Since(start).Nanoseconds())
