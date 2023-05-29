@@ -48,7 +48,7 @@ type playerData struct {
 	Tail  uint32
 
 	Direction uint8
-	Dead      bool
+	DeadFor   uint8
 
 	Command uint8
 }
@@ -101,15 +101,20 @@ func GameUpdate() {
 		gameTick++
 		gameLock.Lock()
 
+		deletePlayer := -1
 		for p, player := range players {
-			if player.Dead {
+			if player.DeadFor > 0 {
+				players[p].DeadFor++
+				if player.DeadFor > 4 {
+					deletePlayer = p
+				}
 				continue
 			}
 			head := player.Tiles[player.Head]
 			newHead := goDir(player.Direction, head)
 			if newHead.X > boardSize || newHead.Y > boardSize ||
 				newHead.X < 1 || newHead.Y < 1 {
-				players[p].Dead = true
+				players[p].DeadFor = 1
 				fmt.Printf("Player %v #%v died.\n", player.Name, player.ID)
 				continue
 			}
@@ -118,6 +123,11 @@ func GameUpdate() {
 			players[p].Head = player.Length - 1
 
 		}
+		if deletePlayer > -1 {
+			fmt.Printf("Player %v #%v deleted.\n", players[deletePlayer].Name, players[deletePlayer].ID)
+			players = append(players[:deletePlayer], players[deletePlayer+1:]...)
+		}
+
 		fmt.Printf("tick %v\n", gameTick)
 
 		gameLock.Unlock()
@@ -137,7 +147,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, player := range players {
 		for _, tile := range player.Tiles {
-			if player.Dead {
+			if player.DeadFor > 0 {
 				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, color.NRGBA{0xFF, 0, 0, 0xFF}, false)
 			} else {
 				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, colorList[player.Color], false)
