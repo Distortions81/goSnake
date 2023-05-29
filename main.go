@@ -17,6 +17,8 @@ var (
 	gameTick    uint64
 	gameLock    sync.Mutex
 	gameRunning bool
+	hudColor    = color.NRGBA{0x20, 0x20, 0x20, 0xff}
+	deadColor   = color.NRGBA{0xFF, 0, 0, 0xFF}
 )
 
 type XY struct {
@@ -40,6 +42,27 @@ const (
 	DIR_SOUTH = 3
 	DIR_WEST  = 4
 )
+
+var colorList = []color.NRGBA{
+	{255, 255, 255, 255},
+	{203, 67, 53, 255},
+	{40, 180, 99, 255},
+	{41, 128, 185, 255},
+	{244, 208, 63, 255},
+	{243, 156, 18, 255},
+	{255, 151, 197, 255},
+	{165, 105, 189, 255},
+	{209, 209, 209, 255},
+	{64, 199, 178, 255},
+	{199, 54, 103, 255},
+	{99, 114, 166, 255},
+	{134, 166, 99, 255},
+	{206, 231, 114, 255},
+	{209, 114, 231, 255},
+	{114, 228, 231, 255},
+	{176, 116, 78, 255},
+	{210, 113, 52, 255},
+}
 
 type playerData struct {
 	Name   string
@@ -174,13 +197,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, player := range players {
 		for _, tile := range player.Tiles {
 			if player.DeadFor > 0 {
-				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, color.NRGBA{0xFF, 0, 0, 0xFF}, false)
+				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, deadColor, false)
 			} else {
 				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, colorList[player.Color], false)
 			}
 		}
 	}
-	vector.DrawFilledRect(screen, 0, float32(screen.Bounds().Dy()-hudSize), float32(screen.Bounds().Dx()), hudSize, color.NRGBA{0x20, 0x20, 0x20, 0xff}, false)
+	vector.DrawFilledRect(screen, 0, float32(screen.Bounds().Dy()-hudSize), float32(screen.Bounds().Dx()), hudSize, hudColor, false)
 	buf := fmt.Sprintf("FPS: %0.2f, Players: %v", ebiten.ActualFPS(), len(players))
 	ebitenutil.DebugPrintAt(screen, buf, 0, (screen.Bounds().Dy() - hudSize + 2))
 	gameLock.Unlock()
@@ -193,25 +216,4 @@ func newGame() *Game {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
-}
-
-var colorList = []color.NRGBA{
-	{255, 255, 255, 255},
-	{203, 67, 53, 255},
-	{40, 180, 99, 255},
-	{41, 128, 185, 255},
-	{244, 208, 63, 255},
-	{243, 156, 18, 255},
-	{255, 151, 197, 255},
-	{165, 105, 189, 255},
-	{209, 209, 209, 255},
-	{64, 199, 178, 255},
-	{199, 54, 103, 255},
-	{99, 114, 166, 255},
-	{134, 166, 99, 255},
-	{206, 231, 114, 255},
-	{209, 114, 231, 255},
-	{114, 228, 231, 255},
-	{176, 116, 78, 255},
-	{210, 113, 52, 255},
 }
