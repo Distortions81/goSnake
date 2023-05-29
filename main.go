@@ -10,22 +10,38 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-var players []playerData
-var gameTick uint64
-var gameLock sync.Mutex
-var gameRunning bool
+var (
+	players     []playerData
+	gameTick    uint64
+	gameLock    sync.Mutex
+	gameRunning bool
+)
 
 type XY struct {
 	X int16
 	Y int16
 }
 
+const (
+	DIR_NONE  = 0
+	DIR_NORTH = 1
+	DIR_EAST  = 2
+	DIR_SOUTH = 3
+	DIR_WEST  = 4
+)
+
 type playerData struct {
-	Name     string
-	Color    uint8
-	Length   uint16
-	Tiles    []XY
-	LastTile uint16
+	Name   string
+	Color  uint8
+	Length uint32
+	ID     uint32
+
+	Tiles []XY
+	Head  uint32
+	Tail  uint32
+
+	Direction uint8
+	Dead      bool
 
 	Command uint8
 }
@@ -34,15 +50,15 @@ type Game struct {
 }
 
 func main() {
-	var startTiles = []XY{{X: 1, Y: 1}}
-	players = append(players, playerData{Name: "test", Color: 1, Length: 1, Tiles: startTiles})
+	var startTiles = []XY{{X: 1, Y: 1}, {X: 1, Y: 2}, {X: 1, Y: 3}}
+	players = append(players,
+		playerData{ID: 1, Name: "Test", Color: 1, Length: 3, Tiles: startTiles, Head: 2, Tail: 0, Direction: DIR_EAST})
 
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
 	ebiten.SetScreenClearedEveryFrame(true)
 	ebiten.SetWindowSize(int(boardSize*gridSize), int(boardSize*gridSize))
 
-	gameRunning = true
 	go GameUpdate()
 
 	if err := ebiten.RunGameWithOptions(newGame(), nil); err != nil {
@@ -50,15 +66,51 @@ func main() {
 	}
 }
 
+func goDir(dir uint8, pos XY) XY {
+	switch dir {
+	case DIR_NORTH:
+		pos.Y--
+	case DIR_EAST:
+		pos.X++
+	case DIR_SOUTH:
+		pos.Y++
+	case DIR_WEST:
+		pos.X--
+	}
+	return pos
+}
+
 func GameUpdate() {
 	sleepTime := 1000000000 / gameSpeed
 	gameTick = 0
+
+	for !gameRunning {
+		time.Sleep(time.Second)
+	}
 
 	for gameRunning {
 		start := time.Now()
 		gameTick++
 		gameLock.Lock()
 
+		for p, player := range players {
+			if player.Dead {
+				continue
+			}
+			head := player.Tiles[player.Head]
+			newHead := goDir(player.Direction, head)
+			if newHead.X >= boardSize || newHead.Y >= boardSize ||
+				newHead.X < 1 || newHead.Y < 1 {
+				players[p].Dead = true
+				players[p].Color = 0
+				fmt.Printf("Player %v #%v died.\n", player.Name, player.ID)
+				continue
+			}
+
+			players[p].Tiles = append(player.Tiles[1:], XY{X: newHead.X, Y: newHead.Y})
+			players[p].Head = player.Length - 1
+
+		}
 		fmt.Printf("tick %v\n", gameTick)
 
 		gameLock.Unlock()
@@ -74,15 +126,19 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	gameLock.Lock()
+
 	for _, player := range players {
 		for _, tile := range player.Tiles {
 			vector.DrawFilledRect(screen, float32(tile.X*gridSize), float32(tile.Y*gridSize), tileSize, tileSize, colorList[player.Color], false)
 		}
 	}
 
+	gameLock.Unlock()
 }
 
 func newGame() *Game {
+	gameRunning = true
 	return &Game{}
 }
 
@@ -90,13 +146,16 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }
 
-const gridSize = 16
-const border = 1
-const tileSize = gridSize - border
-const boardSize = 40
-const gameSpeed = 2
+const (
+	gridSize  = 16
+	border    = 1
+	tileSize  = gridSize - border
+	boardSize = 40
+	gameSpeed = 2
+)
 
 var colorList = []color.NRGBA{
+	{255, 255, 255, 255},
 	{203, 67, 53, 255},
 	{40, 180, 99, 255},
 	{41, 128, 185, 255},
