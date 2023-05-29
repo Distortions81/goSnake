@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
+	"sync"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -9,6 +11,9 @@ import (
 )
 
 var players []playerData
+var gameTick uint64
+var gameLock sync.Mutex
+var gameRunning bool
 
 type XY struct {
 	X int16
@@ -37,11 +42,31 @@ func main() {
 	ebiten.SetScreenClearedEveryFrame(true)
 	ebiten.SetWindowSize(int(boardSize*gridSize), int(boardSize*gridSize))
 
+	gameRunning = true
+	go GameUpdate()
+
 	if err := ebiten.RunGameWithOptions(newGame(), nil); err != nil {
 		return
 	}
+}
 
-	time.Sleep(time.Second)
+func GameUpdate() {
+	sleepTime := 1000000000 / gameSpeed
+	gameTick = 0
+
+	for gameRunning {
+		start := time.Now()
+		gameTick++
+		gameLock.Lock()
+
+		fmt.Printf("tick %v\n", gameTick)
+
+		gameLock.Unlock()
+		sleepFor := sleepTime - int(time.Since(start).Nanoseconds())
+		if sleepFor > 0 {
+			time.Sleep(time.Duration(sleepFor))
+		}
+	}
 }
 
 func (g *Game) Update() error {
@@ -51,7 +76,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	for _, player := range players {
 		for _, tile := range player.Tiles {
-			vector.DrawFilledRect(screen, float32(tile.X), float32(tile.Y), tileSize, tileSize, colorList[player.Color], false)
+			vector.DrawFilledRect(screen, float32(tile.X*gridSize), float32(tile.Y*gridSize), tileSize, tileSize, colorList[player.Color], false)
 		}
 	}
 
@@ -65,10 +90,11 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }
 
-const gridSize = 32
+const gridSize = 16
 const border = 1
 const tileSize = gridSize - border
-const boardSize = 20
+const boardSize = 40
+const gameSpeed = 2
 
 var colorList = []color.NRGBA{
 	{203, 67, 53, 255},
