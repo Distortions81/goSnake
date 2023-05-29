@@ -23,6 +23,13 @@ type XY struct {
 }
 
 const (
+	startGameDelayMS = 1000
+	gridSize         = 16
+	border           = 1
+	tileSize         = gridSize - border
+	boardSize        = 50
+	gameSpeed        = 4
+
 	DIR_NONE  = 0
 	DIR_NORTH = 1
 	DIR_EAST  = 2
@@ -50,7 +57,7 @@ type Game struct {
 }
 
 func main() {
-	var startTiles = []XY{{X: 1, Y: 1}, {X: 1, Y: 2}, {X: 1, Y: 3}}
+	var startTiles = []XY{{X: 1, Y: 1}, {X: 2, Y: 1}, {X: 3, Y: 1}}
 	players = append(players,
 		playerData{ID: 1, Name: "Test", Color: 1, Length: 3, Tiles: startTiles, Head: 2, Tail: 0, Direction: DIR_EAST})
 
@@ -87,6 +94,7 @@ func GameUpdate() {
 	for !gameRunning {
 		time.Sleep(time.Second)
 	}
+	time.Sleep(time.Millisecond * startGameDelayMS)
 
 	for gameRunning {
 		start := time.Now()
@@ -99,10 +107,9 @@ func GameUpdate() {
 			}
 			head := player.Tiles[player.Head]
 			newHead := goDir(player.Direction, head)
-			if newHead.X >= boardSize || newHead.Y >= boardSize ||
+			if newHead.X > boardSize || newHead.Y > boardSize ||
 				newHead.X < 1 || newHead.Y < 1 {
 				players[p].Dead = true
-				players[p].Color = 0
 				fmt.Printf("Player %v #%v died.\n", player.Name, player.ID)
 				continue
 			}
@@ -130,7 +137,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, player := range players {
 		for _, tile := range player.Tiles {
-			vector.DrawFilledRect(screen, float32(tile.X*gridSize), float32(tile.Y*gridSize), tileSize, tileSize, colorList[player.Color], false)
+			if player.Dead {
+				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, color.NRGBA{0xFF, 0, 0, 0xFF}, false)
+			} else {
+				vector.DrawFilledRect(screen, float32((tile.X-1)*gridSize), float32((tile.Y-1)*gridSize), tileSize, tileSize, colorList[player.Color], false)
+			}
 		}
 	}
 
@@ -145,14 +156,6 @@ func newGame() *Game {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }
-
-const (
-	gridSize  = 16
-	border    = 1
-	tileSize  = gridSize - border
-	boardSize = 40
-	gameSpeed = 2
-)
 
 var colorList = []color.NRGBA{
 	{255, 255, 255, 255},
