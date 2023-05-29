@@ -65,6 +65,10 @@ func main() {
 	players = append(players,
 		playerData{ID: 1, Name: "Test", Color: 1, Length: 3, Tiles: startTiles, Head: 2, Tail: 0, Direction: DIR_EAST})
 
+	startTiles = []XY{{X: 1, Y: 2}, {X: 1, Y: 2}, {X: 1, Y: 3}}
+	players = append(players,
+		playerData{ID: 1, Name: "Tester", Color: 2, Length: 3, Tiles: startTiles, Head: 2, Tail: 0, Direction: DIR_SOUTH})
+
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
 	ebiten.SetScreenClearedEveryFrame(true)
@@ -176,8 +180,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	}
-	buf := fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS())
-	ebitenutil.DebugPrintAt(screen, buf, 0, screen.Bounds().Dy()-20)
+	vector.DrawFilledRect(screen, 0, float32(screen.Bounds().Dy()-hudSize), float32(screen.Bounds().Dx()), hudSize, color.NRGBA{0x20, 0x20, 0x20, 0xff}, false)
+	buf := fmt.Sprintf("FPS: %0.2f, Players: %v", ebiten.ActualFPS(), len(players))
+	ebitenutil.DebugPrintAt(screen, buf, 0, (screen.Bounds().Dy() - hudSize + 2))
 	gameLock.Unlock()
 }
 
