@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 )
 
 func main() {
@@ -25,9 +28,31 @@ func main() {
 
 	go GameUpdate()
 
+	connectServer()
+
 	if err := ebiten.RunGameWithOptions(newGame(), nil); err != nil {
 		return
 	}
+}
+
+func connectServer() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "ws://localhost:8080", nil)
+	if err != nil {
+		fmt.Printf("connectServer: %v", err)
+		return
+	}
+	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+
+	err = wsjson.Write(ctx, c, "hi")
+	if err != nil {
+		fmt.Printf("connectServer: %v", err)
+		return
+	}
+
+	c.Close(websocket.StatusNormalClosure, "")
 }
 
 func checkDir(dir uint8) bool {
