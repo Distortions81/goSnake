@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -39,16 +40,17 @@ func connectServer() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	c, _, err := websocket.Dial(ctx, "ws://localhost:8080", nil)
+	c, _, err := websocket.Dial(ctx, "wss://127.0.0.1:8080", nil)
 	if err != nil {
-		fmt.Printf("connectServer: %v", err)
+		fmt.Printf("connectServer: %v\n", err)
+		os.Exit(0)
 		return
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
 	err = wsjson.Write(ctx, c, "hi")
 	if err != nil {
-		fmt.Printf("connectServer: %v", err)
+		fmt.Printf("connectServer: %v\n", err)
 		return
 	}
 
