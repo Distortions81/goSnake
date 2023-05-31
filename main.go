@@ -1,11 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"crypto/tls"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -29,41 +25,9 @@ func main() {
 
 	go GameUpdate()
 
-	connectServer()
-
 	if err := ebiten.RunGameWithOptions(newGame(), nil); err != nil {
 		return
 	}
-}
-
-var authSite = "https://127.0.0.1:8080"
-
-func connectServer() {
-	/* Create HTTP client with custom transport */
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-	client := &http.Client{Transport: transport}
-
-	/* Send HTTPS POST request to server */
-	response, err := client.Post(authSite, "application/json", bytes.NewBuffer([]byte("Hello:test")))
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
-	defer response.Body.Close()
-
-	/* Read server response */
-	responseBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	resp := string(responseBytes)
-
-	fmt.Printf("%v\n", resp)
 }
 
 func checkDir(dir uint8) bool {
