@@ -1,16 +1,16 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"crypto/tls"
 	"fmt"
-	"os"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 )
 
 func main() {
@@ -36,25 +36,34 @@ func main() {
 	}
 }
 
+var authSite = "https://127.0.0.1:8080"
+
 func connectServer() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
+	/* Create HTTP client with custom transport */
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &http.Client{Transport: transport}
 
-	c, _, err := websocket.Dial(ctx, "wss://127.0.0.1:8080", nil)
+	/* Send HTTPS POST request to server */
+	response, err := client.Post(authSite, "application/json", bytes.NewBuffer([]byte("Hello:test")))
 	if err != nil {
-		fmt.Printf("connectServer: %v\n", err)
-		os.Exit(0)
+		fmt.Printf("%v\n", err)
 		return
 	}
-	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+	defer response.Body.Close()
 
-	err = wsjson.Write(ctx, c, "hi")
+	/* Read server response */
+	responseBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Printf("connectServer: %v\n", err)
-		return
+		panic(err)
 	}
 
-	c.Close(websocket.StatusNormalClosure, "")
+	resp := string(responseBytes)
+
+	fmt.Printf("%v\n", resp)
 }
 
 func checkDir(dir uint8) bool {
