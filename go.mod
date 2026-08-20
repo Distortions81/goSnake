@@ -1,6 +1,7 @@
 module goSnake
 
-go 1.20
+go 1.26.6
+toolchain go1.26.6
 
 require (
 	github.com/hajimehoshi/ebiten/v2 v2.5.7
