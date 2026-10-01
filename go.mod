@@ -4,7 +4,7 @@ go 1.26.6
 
 require (
 	github.com/hajimehoshi/ebiten/v2 v2.10.3
-	golang.org/x/image v0.45.0
+	golang.org/x/image v0.46.0
 	nhooyr.io/websocket v1.8.7
 )
 
@@ -17,7 +17,7 @@ require (
 	github.com/hajimehoshi/go-mp3 v0.3.4 // indirect
 	github.com/jfreymuth/pulse v0.1.3 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 )
