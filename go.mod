@@ -3,7 +3,7 @@ module goSnake
 go 1.26.6
 
 require (
-	github.com/hajimehoshi/ebiten/v2 v2.10.3
+	github.com/hajimehoshi/ebiten/v2 v2.10.4
 	golang.org/x/image v0.45.0
 	nhooyr.io/websocket v1.8.7
 )
